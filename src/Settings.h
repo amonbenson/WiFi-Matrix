@@ -1,8 +1,7 @@
 /*
- * ESP8266 WiFI RGB LED Matrix main file.
+ * ESP8266 WiFI RGB LED Matrix Settings file.
  * 
- * This file contains the full code neccessary to drive the RGB Matrix, except for the gif decoding
- * (which can be found in GifDecoder_Impl.h).
+ * This file contains settings like wifi credentials and size of the led matrix.
  * 
  * Written by: Amon Benson
  * 
