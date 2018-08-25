@@ -23,7 +23,7 @@
  * along with WiFi-Matrix. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define WIFI_SSID                       "AOU-Box"
+#define WIFI_SSID                       "AOU-Box-Repeater"
 #define WIFI_PSK                        "ty0tSu7px2py"
 #define WIFI_HOSTNAME                   "wifimatrix"
 
@@ -33,8 +33,10 @@
 #define MATRIX_WIDTH                    12
 #define MATRIX_HEIGHT                   12
 
-#define INITIAL_DELAY                   0
 #define ANIMATION_CHANGE_INTERVAL       15000
+
+#define INITIAL_DELAY                   0
+#define MAX_UPLOAD_ANIMATION_FILES      512
 
 #define D_ANIMATIONS                    "/animations"
 #define F_WEBINTERFACE                  "/webinterface/index.html"

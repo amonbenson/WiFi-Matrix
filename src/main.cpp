@@ -57,6 +57,7 @@ File file;
 
 // next animation change time
 bool cycleAnimations = true;
+bool uploading = false;
 unsigned long timeAnimationChange;
 
 // led strip object (and gamma corrector)
@@ -98,6 +99,16 @@ void updateNumFiles() {
     }
 }
 
+String generateFilename(String prefix, String suffix, int tries) {
+    for (int i = 0; i < tries; i++) {
+        String filename = prefix + i + suffix;
+        if (!SPIFFS.exists(filename)) return filename;
+    }
+
+    Serial.println("Fatal: Could not generate a new filename!");
+    return "";
+}
+
 bool loadCurrentAnimationFile() {
     Serial.print("Loading animation: ");
     Serial.println(currentFileIndex);
@@ -113,7 +124,12 @@ bool loadCurrentAnimationFile() {
     while (dir.next()) {
         if (i == currentFileIndex) {
             file = dir.openFile("r");
-            decoder.startDecoding();
+            int success = decoder.startDecoding();
+            if (success != 0) {
+                // The file is invalid. Clear the screen.
+                strip.ClearTo(RgbColor(0, 0, 0));
+                strip.Show();
+            }
             return true;
         }
         i++;
@@ -231,6 +247,52 @@ void handlePrevCallback() {
     server.send(200, "text/plain", "success");
 }
 
+void handleFileUploadCallback() {
+    HTTPUpload& upload = server.upload();
+
+    if (upload.status == UPLOAD_FILE_START) {
+        // Don't upload if we are already currently uploading
+        if (uploading) {
+            Serial.println("Couldn't start second file upload!");
+            return;
+        }
+
+        // Get an empty filename. Overwrite our current gif file with the file being currently uploaded.
+        String filename = generateFilename((String) D_ANIMATIONS + "/upload", ".gif", MAX_UPLOAD_ANIMATION_FILES);
+        file = SPIFFS.open(filename, "w");
+
+        // Set uploading flag to true. This will stop the GIF playback to avoid multiple read/write conflicts in the SPIFFS.
+        uploading = true;
+        
+        // Show the splash while uploading.
+        displaySplash();
+        strip.Show();
+
+        Serial.print("FILE UPLOAD ");
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+        // If we have are currently uploading, write the data
+        if (uploading && file) file.write(upload.buf, upload.currentSize);
+
+        Serial.print(".");
+    } else if (upload.status == UPLOAD_FILE_END && uploading && file) {
+        // File upload ended or aborted.
+        file.close();
+        uploading = false;
+
+        Serial.println(" DONE");
+
+        // Redirect to the root page
+        server.sendHeader("Location", String("/"), true);
+        server.send(302, "text/plain", "");
+
+        // Resume the animation (and re-read the number of files, cause we'll have one more now)
+        updateNumFiles();
+        currentFileIndex = 0;
+        loadCurrentAnimationFile();
+        timeAnimationChange = millis() + ANIMATION_CHANGE_INTERVAL;
+    }
+}
+
 void connectWiFi() {
     // Start WiFi
     WiFi.mode(WIFI_STA);
@@ -272,7 +334,7 @@ void setup() {
     Serial.println("under certain conditions\n\n\n");
 
     // Init the led strip and display a litte splash screen
-    Serial.println("Initializing: leds");
+    Serial.println("Initializing: LEDs");
     strip.Begin();
     displaySplash();
     strip.Show();
@@ -294,6 +356,7 @@ void setup() {
 
     // Init the http server
     server.on("/", handleRootCallback);
+    server.on("/upload", HTTP_POST, [](){ server.send(200, "text/plain", ""); }, handleFileUploadCallback);
     server.on("/control/play", handlePlayCallback);
     server.on("/control/pause", handlePauseCallback);
     server.on("/control/next", handleNextCallback);
@@ -301,7 +364,7 @@ void setup() {
     server.onNotFound(handleRootCallback);
 
     // Connect to the WiFi
-    Serial.println("Initializing: WiFi-Connection ...");
+    Serial.println("Initializing: WiFi-Connection");
     connectWiFi();
     
     Serial.println("Initializing: Animation player");
@@ -322,6 +385,15 @@ void loop() {
 
     // Handle any http clients
     server.handleClient();
+
+    // Upload in progress
+    if (uploading) {
+        // TODO: BETTER UPLOAD-ANIMATION
+        screenClearCallback();
+        updateScreenCallback();
+
+        return;
+    }
 
     // Load in the next file (if cycling)
     if (millis() >= timeAnimationChange && cycleAnimations) {

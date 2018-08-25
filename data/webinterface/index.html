@@ -58,6 +58,7 @@
 			left: 0;
 			right: 0;
 			top: 50%;
+			
 			font-size: 1.6rem;
 			text-align: center;
 			
@@ -75,6 +76,8 @@
 		.controlbar-button {
 			background-color: #FFFFFF;
 			font-size: 1.5rem;
+			
+			vertical-align: center;
 			
 			padding: 0.4em 0.8em;
 			
@@ -95,6 +98,49 @@
 			outline: none;
 		}
 		
+		.cornerbutton-container {
+			position: absolute;
+			z-index: 2;
+		
+			left: 0.5rem;
+			bottom: 0.5rem;
+		}
+		
+		.cornerbutton {
+			width: 0.1px;
+			height: 0.1px;
+			opacity: 0;
+			overflow: hidden;
+			position: absolute;
+			z-index: -1;
+		}
+		
+		.cornerbutton + label {
+			display: inline-block;
+			font-size: 1.3rem;
+
+			height: 1.6rem;
+			vertical-align: bottom;
+			
+			margin: 0.5rem;
+			padding: 0.6em 1.2em;
+			cursor: pointer;
+			
+			border: none;
+			border-radius: 0.3em;
+			
+			background-color: white;
+			color: black;
+			
+			transition: filter 0.3s, transform 0.3s;
+		}
+		
+		.cornerbutton + label:active {
+			filter: brightness(70%) !important;
+			
+			transform: scale(0.97);
+		}
+		
 		.infotext {
 			position: absolute;
 			
@@ -109,11 +155,11 @@
 		.credittext {
 			position: absolute;
 			z-index: 2;
+
+			font-size: 0.6rem;
 			
-			left: 1em;
 			right: 1em;
 			bottom: 1em;
-			text-align: right;
 		
 			color: white;
 			opacity: 0.2;
@@ -126,7 +172,15 @@
 			}
 			
 			.credittext {
-				text-align: center;
+				/*text-align: center;*/
+			}
+
+			.text-short {
+				display: inline-block;
+			}
+
+			.text-long {
+				display: none;
 			}
 		}
 		
@@ -134,6 +188,18 @@
 		@media only screen and (min-width: 769px) {
 			.controlbar-button:hover {
 				filter: brightness(97%);
+			}
+			
+			.fileupload-container:hover {
+				filter: brightness(90%);
+			}
+
+			.text-short {
+				display: none;
+			}
+
+			.text-long {
+				display: inline-block;
 			}
 		}
 	</style>
@@ -145,12 +211,28 @@
 </div>
 
 <div class="controlbar">
-	<button class="controlbar-button" id="button-prev" onclick="prevOnclick()">&#9665;&#9665;</button>
-	<button class="controlbar-button" id="button-play" onclick="playOnclick()">&#9707;</button>
-	<button class="controlbar-button" id="button-next" onclick="nextOnclick()">&#9655;&#9655;</button>
+	<input type="button" class="controlbar-button" id="button-prev" onclick="prevOnclick()" value="&#9665;&#9665;">
+	<input type="button" class="controlbar-button" id="button-play" onclick="playOnclick()" value="&#9707;">
+	<input type="button" class="controlbar-button" id="button-next" onclick="nextOnclick()" value="&#9655;&#9655;">
 </div>
 
 <div class="infotext" id="infotext"></div>
+
+<div class="cornerbutton-container">
+	<form method="post" enctype="multipart/form-data" action="/upload">
+		<input type="file" class="cornerbutton" id="fileupload" name="fileupload" onchange="this.form.submit()">
+		<label for="fileupload">
+			<span class="text-long">GIF Datei hochladen</span>
+			<span class="text-short">&#8682;</span>
+		</label>
+
+		<input type="button" class="cornerbutton" id="deletecurrent">
+		<label for="deletebutton">
+			<span class="text-long">Aktuelle Animation löschen</span>
+			<span class="text-short">&#9747;</span>
+		</label>
+	</form>
+</div>
 
 <div class="credittext">Copyright &copy; 2018&emsp;Amon Benson</div>
 
@@ -158,6 +240,14 @@
 
 var fadeOutUpdater;
 var playing = true;
+
+
+
+// Register events
+/*document.addEventListener("DOMContentLoaded", function() {
+  // File uploader change event
+  document.getElementById('gif-fileupload').addEventListener('change', gifFileuploadOnchange, false);
+});*/
 
 
 
@@ -210,6 +300,45 @@ function prevOnclick() {
 	
 	req.open("POST", "/control/prev");
 	req.send();
+}
+
+function gifFileuploadOnchange(evt) {
+	setInfoText("Wird hochgeladen...");
+	
+	evt.stopPropagation();
+    evt.preventDefault();
+	
+	var uploadFile = evt.target.files[0];
+	if (!uploadFile) return;
+	
+	// Create the file to be sent
+	var reader = new FileReader();
+	
+	// Add the metadata
+	var data = new Object();
+    data.name = uploadFile.name;
+    data.date = uploadFile.lastModified;
+    data.size = uploadFile.size;
+    data.type = uploadFile.type;
+	
+	// Add the read listener
+	reader.onload = function(fileData) {
+		data.fileData = fileData.target.result;
+		
+		// Send the file
+		var req = new XMLHttpRequest();
+		req.onreadystatechange = function() {
+			if (this.readyState == 4 && status == 200) {
+				console.log("SUCCESS");
+			}
+		}
+		
+		req.open("POST", "/upload/gif");
+		req.send();
+    }
+	
+	// Read the selected file to send it over.
+	reader.readAsDataURL(uploadFile);
 }
 
 function setInfoText(text) {
