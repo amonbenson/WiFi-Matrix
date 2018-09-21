@@ -37,6 +37,9 @@
 // Include NeoPixelBus
 #include <NeoPixelBus.h>
 
+// Include the FFT library
+#include <arduinoFFT.h>
+
 // Include the GIF file decoder and settings files
 #include "GifDecoder.h"
 #include "Settings.h"
@@ -45,8 +48,15 @@
 // DEFINES AND GLOBAL VARIABLES
 
 
+#define FFT_SAMPLING_PERIOD round(1000000*(1.0/FFT_SAMPLING_FREQUENCY))
+
 #define NUM_LEDS (MATRIX_WIDTH * MATRIX_HEIGHT) // Number of leds on the strip
 #define LZW_MAX_BITS 10 // 10 - 12. Should be kept as low as possible
+
+#define MODE_GIF 0
+#define MODE_FFT 1
+
+int mode = MODE_FFT;
 
 // GIF decoder object
 GifDecoder<MATRIX_WIDTH, MATRIX_HEIGHT, LZW_MAX_BITS> decoder;
@@ -67,9 +77,58 @@ NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip(NUM_LEDS);
 // HTTP server
 ESP8266WebServer server(80);
 
+// FFT object
+arduinoFFT FFT = arduinoFFT();
+
+// FFT variables
+unsigned long fftTimeFlag;
+
+double fftReal[FFT_SAMPLES];
+double fftImag[FFT_SAMPLES];
+double fft[MATRIX_WIDTH];
+
 
 // GLOBALLY ACCESSABLE HELPER METHODES
 
+
+void sampleAndUpdateFFT() {
+    /*SAMPLING*/
+    double lastValue = 0;
+    for (int i = 0; i < FFT_SAMPLES; i++) {
+        fftTimeFlag = micros();    // Overflows after around 70 minutes!
+        double value = analogRead(0) - FFT_OFFSET;
+
+        // Set the fft value to the derivative of the audio input
+        // to eliminate any dc offset.
+        if (i == 0) fftReal[i] = 0;
+        else fftReal[i] = value - lastValue;
+        fftImag[i] = 0;
+
+        lastValue = value;
+
+        while (micros() < (fftTimeFlag + FFT_SAMPLING_PERIOD)) { }
+    }
+
+    /*FFT*/
+    FFT.Windowing(fftReal, FFT_SAMPLES, FFT_WIN_TYP_HAMMING, FFT_FORWARD);
+    FFT.Compute(fftReal, fftImag, FFT_SAMPLES, FFT_FORWARD);
+    FFT.ComplexToMagnitude(fftReal, fftImag, FFT_SAMPLES);
+
+    /* Post Processing */
+    for (int i = 0; i < MATRIX_WIDTH; i++) {
+        int j = i * (FFT_SAMPLES / 2 - 2) / (MATRIX_WIDTH - 1) + 1;
+        fftReal[i] *= 1 + j * 1.3;
+        fftReal[i] -= FFT_THRESHOLD;
+
+        if (fftReal[i] > fft[i]) {
+            // Apply Attack
+            fft[i] = fftReal[i] * (1.0 - FFT_ATTACK) + fft[i] * FFT_ATTACK;
+        } else {
+            // Apply Release
+            fft[i] = fftReal[i] * (1.0 - FFT_RELEASE) + fft[i] * FFT_RELEASE;
+        }
+    }
+}
 
 void playAnimationCycle() {
     timeAnimationChange = millis() + ANIMATION_CHANGE_INTERVAL;
@@ -109,6 +168,23 @@ String generateFilename(String prefix, String suffix, int tries) {
     return "";
 }
 
+bool deleteCurrentAnimationFile() {
+    // Store the current file index in the directory
+    int i = 0;
+
+    // Loop through the directory. If the file with the current index is found, open it and start the decoder.
+    Dir dir = SPIFFS.openDir(D_ANIMATIONS);
+    while (dir.next()) {
+        if (i == currentFileIndex) {
+            SPIFFS.remove(dir.fileName());
+            return true;
+        }
+        i++;
+    }
+
+    return false;
+}
+
 bool loadCurrentAnimationFile() {
     Serial.print("Loading animation: ");
     Serial.println(currentFileIndex);
@@ -116,7 +192,7 @@ bool loadCurrentAnimationFile() {
     // Close up the old animation file
     if (file) file.close();
 
-    // Store the current file index in the direction
+    // Store the current file index in the directory
     int i = 0;
 
     // Loop through the directory. If the file with the current index is found, open it and start the decoder.
@@ -136,6 +212,8 @@ bool loadCurrentAnimationFile() {
     }
 
     // File wasn't found
+    strip.ClearTo(RgbColor(0, 0, 0));
+    strip.Show();
     return false;
 }
 
@@ -155,11 +233,11 @@ void updateScreenCallback(void) {
 
 void drawPixelCallback(int16_t x, int16_t y, uint8_t red, uint8_t green, uint8_t blue) {
     if (x > MATRIX_WIDTH - 1) return;
-    if (y > MATRIX_WIDTH - 1) return;
+    if (y > MATRIX_HEIGHT - 1) return;
 
     int pos = 0;
-    if (y % 2 == 0) pos = y * MATRIX_WIDTH + x;
-    else pos = y * MATRIX_WIDTH + 9 - x;
+    if (y % 2 == 0) pos = (MATRIX_HEIGHT - y - 1) * MATRIX_WIDTH + x;
+    else pos = (MATRIX_HEIGHT - y - 1) * MATRIX_WIDTH + MATRIX_WIDTH - x - 1;
 
     strip.SetPixelColor(pos, colorGamma.Correct(RgbColor(red, green, blue)));
 }
@@ -222,29 +300,75 @@ void handleRootCallback() {
 }
 
 void handlePlayCallback() {
+    // TODO: resume visualization playback (maybe we'll just gray out the play button via JavaScript if fft mode is on).
+    if (mode == MODE_FFT) {
+        return;
+    }
+
     playAnimationCycle();
 
     server.send(200, "text/plain", "success");
 }
 
 void handlePauseCallback() {
+    // TODO: pause visualization playback (maybe we'll just gray out the play button via JavaScript if fft mode is on).
+    if (mode == MODE_FFT) {
+        return;
+    }
+
     pauseAnimationCycle();
 
     server.send(200, "text/plain", "success");
 }
 
 void handleNextCallback() {
-    selectNextAnimationFile();
+    if (mode == MODE_GIF) {
+        selectNextAnimationFile();
+        loadCurrentAnimationFile();
+
+        server.send(200, "text/plain", "success");
+    }
+
+    if (mode == MODE_FFT) {
+        // TODO: Select next visualization
+    }
+}
+
+void handlePrevCallback() {
+    if (mode == MODE_GIF) {
+        selectPrevAnimationFile();
+        loadCurrentAnimationFile();
+
+        server.send(200, "text/plain", "success");
+    }
+
+    if (mode == MODE_FFT) {
+        // TODO: Select pervious visualization
+    }
+}
+
+void handleDeleteCallback() {
+    // Return if in FFT mode
+    if (mode == MODE_FFT) {
+        return;
+    }
+
+    deleteCurrentAnimationFile();
+
+    updateNumFiles();
+    if (currentFileIndex > numFiles - 1) currentFileIndex = 0;
+
     loadCurrentAnimationFile();
 
     server.send(200, "text/plain", "success");
 }
 
-void handlePrevCallback() {
-    selectPrevAnimationFile();
-    loadCurrentAnimationFile();
+void handleGIFmodeCallback() {
+    mode = MODE_GIF;
+}
 
-    server.send(200, "text/plain", "success");
+void handleFFTmodeCallback() {
+    mode = MODE_FFT;
 }
 
 void handleFileUploadCallback() {
@@ -290,6 +414,9 @@ void handleFileUploadCallback() {
         currentFileIndex = 0;
         loadCurrentAnimationFile();
         timeAnimationChange = millis() + ANIMATION_CHANGE_INTERVAL;
+
+        // Set the mode to animation mode
+        mode = MODE_GIF;
     }
 }
 
@@ -361,6 +488,9 @@ void setup() {
     server.on("/control/pause", handlePauseCallback);
     server.on("/control/next", handleNextCallback);
     server.on("/control/prev", handlePrevCallback);
+    server.on("/control/delete", handleDeleteCallback);
+    server.on("/control/gifmode", handleGIFmodeCallback);
+    server.on("/control/fftmode", handleFFTmodeCallback);
     server.onNotFound(handleRootCallback);
 
     // Connect to the WiFi
@@ -395,14 +525,38 @@ void loop() {
         return;
     }
 
-    // Load in the next file (if cycling)
-    if (millis() >= timeAnimationChange && cycleAnimations) {
-        timeAnimationChange = millis() + ANIMATION_CHANGE_INTERVAL;
+    // GIF Animation mode
+    if (mode == MODE_GIF) {
+        // Load in the next file (if cycling)
+        if (millis() >= timeAnimationChange && cycleAnimations) {
+            timeAnimationChange = millis() + ANIMATION_CHANGE_INTERVAL;
 
-        selectNextAnimationFile();
-        loadCurrentAnimationFile();
+            selectNextAnimationFile();
+            loadCurrentAnimationFile();
+        }
+
+        // Decode a single frame
+        if (file) decoder.decodeFrame();
     }
 
-    // Decode a single frame
-    if (file) decoder.decodeFrame();
+    // FFT Visualization mode
+    if (mode == MODE_FFT) {
+        // Sample a piece of data and create the FFT
+        sampleAndUpdateFFT();
+
+        // Render visualization
+        screenClearCallback();
+
+        for (int x = 0; x < MATRIX_WIDTH; x++) {
+            int v = fft[x] / MATRIX_HEIGHT;
+
+            for (int y = 0; y < MATRIX_HEIGHT; y++) {
+                if (MATRIX_HEIGHT - y - 1 < v) {
+                    drawPixelCallback(x, y, x * 255 / MATRIX_WIDTH, 255 - x * 255 / MATRIX_WIDTH, 255);
+                }
+            }
+        }
+
+        updateScreenCallback();
+    }
 }

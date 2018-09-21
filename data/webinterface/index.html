@@ -132,7 +132,7 @@
 			background-color: white;
 			color: black;
 			
-			transition: filter 0.3s, transform 0.3s;
+			transition: background-color 0.3s, filter 0.3s, transform 0.3s;
 		}
 		
 		.cornerbutton + label:active {
@@ -170,10 +170,6 @@
 			.titletext {
 				font-size: 2.5rem;
 			}
-			
-			.credittext {
-				/*text-align: center;*/
-			}
 
 			.text-short {
 				display: inline-block;
@@ -190,8 +186,12 @@
 				filter: brightness(97%);
 			}
 			
-			.fileupload-container:hover {
+			.cornerbutton + label:hover {
 				filter: brightness(90%);
+			}
+			
+			#button-delete + label:hover {
+				background-color: #ff8080;
 			}
 
 			.text-short {
@@ -210,6 +210,11 @@
 	WiFi Matrix
 </div>
 
+<div>
+	<input type="button" onclick="gifmodeOnclick()" value="GIF Modus">
+	<input type="button" onclick="fftmodeOnclick()" value="Audio Modus">
+</div>
+
 <div class="controlbar">
 	<input type="button" class="controlbar-button" id="button-prev" onclick="prevOnclick()" value="&#9665;&#9665;">
 	<input type="button" class="controlbar-button" id="button-play" onclick="playOnclick()" value="&#9707;">
@@ -226,8 +231,8 @@
 			<span class="text-short">&#8682;</span>
 		</label>
 
-		<input type="button" class="cornerbutton" id="deletecurrent">
-		<label for="deletebutton">
+		<input type="button" class="cornerbutton" id="button-delete">
+		<label for="deletebutton" onclick="deleteOnclick()">
 			<span class="text-long">Aktuelle Animation löschen</span>
 			<span class="text-short">&#9747;</span>
 		</label>
@@ -263,11 +268,11 @@ function playOnclick() {
 
 	if (playing) {
 		setInfoText("Gestartet");
-		document.getElementById("button-play").innerHTML = "&#9707;";
+		document.getElementById("button-play").value = "\u25EB";
 		req.open("POST", "/control/play");
 	} else {
 		setInfoText("Pausiert");
-		document.getElementById("button-play").innerHTML = "&#9655;";
+		document.getElementById("button-play").value = "\u25B7";
 		req.open("POST", "/control/pause");
 	}
 	
@@ -299,6 +304,45 @@ function prevOnclick() {
 	}
 	
 	req.open("POST", "/control/prev");
+	req.send();
+}
+
+function deleteOnclick() {
+	var req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (this.readyState == 4 && status == 200) {
+			setInfoText("Animation gelöscht!");
+			console.log("SUCCESS");
+		}
+	}
+	
+	req.open("POST", "/control/delete");
+	req.send();
+}
+
+function gifmodeOnclick() {
+	var req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (this.readyState == 4 && status == 200) {
+			setInfoText("Modus: GIF Animation");
+			console.log("SUCCESS");
+		}
+	}
+	
+	req.open("POST", "/control/gifmode");
+	req.send();
+}
+
+function fftmodeOnclick() {
+	var req = new XMLHttpRequest();
+	req.onreadystatechange = function() {
+		if (this.readyState == 4 && status == 200) {
+			setInfoText("Modus: Audio Visualisierung");
+			console.log("SUCCESS");
+		}
+	}
+	
+	req.open("POST", "/control/fftmode");
 	req.send();
 }
 
