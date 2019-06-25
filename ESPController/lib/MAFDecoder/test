@@ -1,0 +1,2 @@
+#!/bin/bash
+if (g++ *.cpp -o out) then (./out) fi

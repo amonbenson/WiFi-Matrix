@@ -1,0 +1,542 @@
+{
+	"info": {
+		"_postman_id": "01875d1f-d8bf-4e2c-b8a4-86f1b64e5050",
+		"name": "LED Matrix Control",
+		"description": "Controller API for the RGB LED Matrix.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Animations",
+			"item": [
+				{
+					"name": "Get Size",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/animations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"animations"
+							]
+						},
+						"description": "Get the number of GIF animations stored"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/animations",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"animations"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "3"
+						}
+					]
+				},
+				{
+					"name": "GET",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/animations/{{animation_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"animations",
+								"{{animation_id}}"
+							]
+						},
+						"description": "Get a single animation as a GIF file"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/animations/{{animation_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"animations",
+										"{{animation_id}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "image/gif",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "GIF87a ... some gif file"
+						}
+					]
+				},
+				{
+					"name": "POST",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "File",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/animations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"animations"
+							]
+						},
+						"description": "Add a new animation"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"gif\": \"GIF78a ... some gif file\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/animations",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"animations"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "text",
+							"header": null,
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "DELETE",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/animations/{{animation_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"animations",
+								"{{animation_id}}"
+							]
+						},
+						"description": "Delete an animation"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/animations/{{animation_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"animations",
+										"{{animation_id}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Control",
+			"item": [
+				{
+					"name": "Next",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/control/next",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"control",
+								"next"
+							]
+						},
+						"description": "Display the next animation or visualization (Shortcut for GET Select -> add 1 -> SET Select)"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/control/next",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"control",
+										"next"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Mode",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/control/mode",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"control",
+								"mode"
+							]
+						},
+						"description": "Get the current mode"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{base_url}}/mode",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"mode"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\n\t\"id\": 0,\n\t\"name\": \"animation\",\n\t\"displayName\": \"Animation\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Mode",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": 0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/control/mode",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"control",
+								"mode"
+							]
+						},
+						"description": "Set the current mode"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "text/plain",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "0"
+								},
+								"url": {
+									"raw": "{{base_url}}/mode",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"mode"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Cycle",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/control/cycle",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"control",
+								"cycle"
+							]
+						},
+						"description": "Get the cycle delay in seconds"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "text",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "20"
+						}
+					]
+				},
+				{
+					"name": "Cycle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "0"
+						},
+						"url": {
+							"raw": "{{base_url}}/control/cycle",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"control",
+								"cycle"
+							]
+						},
+						"description": "Set the cycle delay in seconds, use 0 for pause"
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"enabled\": true\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": null,
+							"header": null,
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		}
+	]
+}

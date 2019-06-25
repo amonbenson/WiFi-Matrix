@@ -1,0 +1,11 @@
+.pixelated-image {
+  image-rendering: pixelated;
+}
+
+.v-btn--floating.v-btn--bottom {
+  bottom: 2.5rem !important;
+}
+
+.control-bar-input {
+  width: 11rem !important;
+}
