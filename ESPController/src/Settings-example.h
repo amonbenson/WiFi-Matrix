@@ -9,7 +9,7 @@
 
 // The uploaded gif files must have the same dimensions as the matrix. Therefore, if the dimensions are changed here, all
 // gif files need to be reuploaded. The provided example files have a resolution of 12x12.
-// Also, the animations have only be tested with square matricies and may not work, if the width and height have different values.
+// Also, the animations have only been tested with square matrices and may not work, if the width and height have different values.
 #define MATRIX_WIDTH                    12 // X-Dimension of the matrix
 #define MATRIX_HEIGHT                   12 // Y-Dimension of the matrix
 
