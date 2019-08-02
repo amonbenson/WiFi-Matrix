@@ -14,7 +14,11 @@ Visualization::Visualization() {
 void Visualization::update(CRGB *leds) {
     // Make a capture on the microphone pin
     for (int i = 0; i < FFT_SAMPLES; i++) {
-        fftReal[i] = analogRead(PIN_MICROPHONE) - FFT_DC_OFFSET;
+        #ifdef FFT_EMULATE_INPUT
+            fftReal[i] = random(6) - 3;
+        #else
+            fftReal[i] = analogRead(PIN_MICROPHONE) - FFT_DC_OFFSET;
+        #endif
         fftImag[i] = 0;
     }
 
@@ -50,7 +54,7 @@ void Visualization::update(CRGB *leds) {
 void Visualization::v_bars(CRGB leds[]) {
     for (int x = 0; x < MATRIX_WIDTH; x++) {
         for (int y = 0; y < MATRIX_HEIGHT; y++) {
-            if (y > MATRIX_HEIGHT - fftVal[x] - 1.5) leds[x + y * MATRIX_WIDTH] = CRGB(x * 255 / 11, y * 255 / 11, 255);
+            if (y > MATRIX_HEIGHT - fftVal[x] - 1.5) leds[x + y * MATRIX_WIDTH] = CRGB(x * 255 / (MATRIX_WIDTH - 1), y * 255 / (MATRIX_HEIGHT - 1), 255);
             else leds[toLedPos(x, y)] = CRGB::Black;
         }
     }

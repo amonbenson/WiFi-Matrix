@@ -3,11 +3,13 @@ import serial
 import pygame
 
 
-screen_width = 600
-screen_height = 600
+baud_rate = 460800
 
 matrix_width = 12
 matrix_height = 12
+
+screen_width = 60 * matrix_width
+screen_height = 60 * matrix_height
 
 
 pygame.init()
@@ -74,7 +76,7 @@ def parseLedData(data):
 if __name__ == '__main__':
     print('Virtual Matrix. Developed by Amon Benson.\n')
 
-    ser = serial.Serial('/dev/ttyUSB0', 115200)
+    ser = serial.Serial('/dev/ttyUSB0', baud_rate)
 
     while True:
         line = ser.readline()

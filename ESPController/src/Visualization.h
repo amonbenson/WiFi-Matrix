@@ -9,7 +9,8 @@
 #define VISUALIZATION_NUM_COLORS        4
 #define NUM_VISUALIZATIONS              1
 
-#define FFT_SAMPLES                     32
+#define FFT_EMULATE_INPUT
+#define FFT_SAMPLES                     64
 #define FFT_DC_OFFSET                   679
 #define FFT_NOISE_REDUCTION             3
 #define FFT_ATTACK                      0.2
