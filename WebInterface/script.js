@@ -1,7 +1,5 @@
 axios.defaults.baseURL = /*'/api';*/'http://matrix/api';
 
-Vue.use(Vuetify)
-
 Vue.component('animation-view', {
   template: `
 <v-layout align-start wrap>
@@ -16,6 +14,7 @@ Vue.component('animation-view', {
     md2
     xl1
     d-flex
+    child-flex
   >
     <v-card flat tile class="d-flex">
       <v-img
@@ -52,9 +51,7 @@ Vue.component('animation-view', {
     @click="$refs.inputUpload.click()"
     color="accent"
     dark
-    small
     absolute
-    fixed
     bottom
     right
     fab
@@ -267,6 +264,17 @@ Vue.component('control-bar', {
 
 const app = new Vue({
   el: '#app',
+  vuetify: new Vuetify({
+    theme: {
+      themes: {
+        light: {
+          primary: '#30C5FF',
+          secondary: '#2176AE',
+          accent: '#D81E5B'
+        }
+      }
+    }
+  }),
   data: () => ({
     modeNames: ['Animation', 'Music'],
     currentMode: 0
@@ -276,11 +284,5 @@ const app = new Vue({
     changeMode: function (mode) {
       this.currentMode = mode
     }
-  },
-
-  mounted: function () {
-    this.$vuetify.theme.primary = '#30C5FF'
-    this.$vuetify.theme.secondary = '#2176AE'
-    this.$vuetify.theme.accent = '#D81E5B'
   }
 })

@@ -9,7 +9,7 @@
 <body>
   <div id="app">
     <v-app>
-      <v-toolbar color="secondary" dark app>
+      <v-app-bar color="secondary" dark app>
         <v-toolbar-title class="headline">
           <span>LED</span>
           <span class="font-weight-light">MATRIX</span>
@@ -26,16 +26,16 @@
           </template>
   
           <v-list>
-            <v-list-tile
+            <v-list-item
               v-for="mode in modeNames.length"
               :key="mode"
               @click="changeMode(mode - 1)"
             >
-              <v-list-tile-title v-text="modeNames[mode - 1]"></v-list-tile-title>
-            </v-list-tile>
+              <v-list-item-title>{{ modeNames[mode - 1] }}</v-list-item-title>
+            </v-list-item>
           </v-list>
         </v-menu>
-      </v-toolbar>
+      </v-app-bar>
 
       <v-content>
         <v-container fluid>

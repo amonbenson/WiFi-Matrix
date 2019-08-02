@@ -374,7 +374,7 @@ void setup() {
     #endif
 
     // Init variables TODO: Load from file / store when changed
-    mode = MODE_VIS;
+    mode = MODE_ANI;
     cycleDelay = 10;
     resetNextCycle();
 
