@@ -5,11 +5,11 @@ import pygame
 
 baud_rate = 460800
 
-matrix_width = 12
-matrix_height = 12
+matrix_width = 32
+matrix_height = 8
 
-screen_width = 60 * matrix_width
-screen_height = 60 * matrix_height
+screen_width = 100 * matrix_width
+screen_height = 100 * matrix_height
 
 
 pygame.init()

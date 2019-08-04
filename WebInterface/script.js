@@ -3,8 +3,8 @@ axios.defaults.baseURL = /*'/api';*/'http://matrix/api';
 Vue.component('animation-view', {
   template: `
 <v-layout align-start wrap>
-  <v-progress-linear v-if="uploadProgress" v-model="uploadProgress" :indeterminate="uploadProgress === 100" color="accent" class="mt-0 mb-4"></v-progress-linear>
-  <v-progress-circular v-if="animationCount === 0" indeterminate color="primary"></v-progress-circular>
+  <v-progress-linear v-if="uploadProgress" v-model="uploadProgress" :indeterminate="uploadProgress === 100" color="secondary" class="mt-0 mb-4"></v-progress-linear>
+  <v-progress-circular v-if="animationCount === 0" indeterminate color="secondary"></v-progress-circular>
 
   <v-flex
     v-for="i in animationCount"
@@ -29,7 +29,7 @@ Vue.component('animation-view', {
             justify-center
             ma-0
           >
-            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            <v-progress-circular indeterminate color="secondary"></v-progress-circular>
           </v-layout>
         </template>
 
@@ -49,7 +49,7 @@ Vue.component('animation-view', {
 
   <v-btn
     @click="$refs.inputUpload.click()"
-    color="accent"
+    color="primary"
     dark
     absolute
     bottom
@@ -266,11 +266,12 @@ const app = new Vue({
   el: '#app',
   vuetify: new Vuetify({
     theme: {
+      dark: true,
       themes: {
-        light: {
-          primary: '#30C5FF',
-          secondary: '#2176AE',
-          accent: '#D81E5B'
+        dark: {
+          primary: '#F77F00',
+          secondary: '#FCBF49',
+          accent: '#D62828'
         }
       }
     }
@@ -279,7 +280,6 @@ const app = new Vue({
     modeNames: ['Animation', 'Music'],
     currentMode: 0
   }),
-
   methods: {
     changeMode: function (mode) {
       this.currentMode = mode

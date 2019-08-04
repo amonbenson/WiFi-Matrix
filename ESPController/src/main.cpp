@@ -48,6 +48,9 @@ unsigned int mode;
 unsigned int cycleDelay;
 unsigned long nextCycle;
 
+// Auto WiFI reconnection time
+unsigned long reconnectionTime;
+
 
 
 
@@ -74,22 +77,32 @@ void resetNextCycle() {
 }
 
 void loadNextAnimation() {
-    // Load the new file
-    FileIO::nextGifFile();
+    if (mode == MODE_ANI) {
+        // Load the new file
+        FileIO::nextGifFile();
 
-    // Start the decoder
-    gifDecoder.startDecoding();
+        // Start the decoder
+        gifDecoder.startDecoding();
+    } else if (mode == MODE_VIS) {
+        // Set the next visualization
+        visualization.nextVis();
+    }
 
     // Reset the delay for the next cycle
     resetNextCycle();
 }
 
 void loadPrevAnimation() {
-    // Load the new file
-    FileIO::prevGifFile();
+    if (mode == MODE_ANI) {
+        // Load the new file
+        FileIO::prevGifFile();
 
-    // Start the decoder
-    gifDecoder.startDecoding();
+        // Start the decoder
+        gifDecoder.startDecoding();
+    } else if (mode == MODE_VIS) {
+        // Set the previous visualization
+        visualization.nextVis();
+    }
 
     // Reset the delay for the next cycle
     resetNextCycle();
@@ -219,14 +232,14 @@ bool onApiRequest(String path, HTTPMethod method) {
         return true;
     }
 
-    // Load next animation
+    // Load next animation / visualization
     if (method == HTTP_POST && path.equals("/api/control/next")) {
         // Load the next gif file and send an ok status
         loadNextAnimation();
         webserver.send(200);
     }
 
-    // Load previous animation
+    // Load previous animation / visualization
     if (method == HTTP_POST && path.equals("/api/control/prev")) {
         // Load the previous gif file and send an ok status
         loadPrevAnimation();
@@ -273,6 +286,40 @@ bool onApiRequest(String path, HTTPMethod method) {
         } else {
             webserver.send(400, "text/plain", "Invalid value for mode");
         }
+
+        return true;
+    }
+
+    // Get all palette colors
+    if (method == HTTP_GET && path.equals("/api/visualizations/palette")) {
+
+        // Get the whole palette and send it
+        const CRGB col = visualization.getPaletteColor(0);
+        if (!col) webserver.send(200, "application/json", "{\"color\":null}");
+        else webserver.send(
+            200,
+            "application/json",
+            "{\"color\":{\"r\":" + String(col.r) + ",\"g\":" + String(col.g) + ",\"b\":" + String(col.b) + "}}"
+        );
+
+        return true;
+    }
+
+    // Get a palette color
+    if (method == HTTP_GET && path.startsWith("/api/visualizations/palette/")) {
+
+        // Get the palette index
+        path.replace("/api/visualizations/palette/", "");
+        int index = path.toInt();
+
+        // Try to get the requested color
+        const CRGB col = visualization.getPaletteColor(index);
+        if (!col) webserver.send(200, "application/json", "{\"color\":null}");
+        else webserver.send(
+            200,
+            "application/json",
+            "{\"color\":{\"r\":" + String(col.r) + ",\"g\":" + String(col.g) + ",\"b\":" + String(col.b) + "}}"
+        );
 
         return true;
     }
@@ -355,6 +402,16 @@ void onConnected(const WiFiEventStationModeConnected& event) {
     DEBUGLN("Webserver running")
 }
 
+void connectWiFi() {
+    // Return if we are already connected or if the reconnection timer hasn't expired yet
+    if (WiFi.status() == WL_CONNECTED || millis() < reconnectionTime) return;
+    reconnectionTime = millis() + WIFI_RECONNECT_INTERVAL;
+
+    // Reconnect
+    DEBUGLN("Connecting WiFi...")
+    WiFi.begin(WIFI_SSID, WIFI_PSK);
+}
+
 
 /*****************************
  *    MAIN SETUP FUNCTION    *
@@ -374,9 +431,13 @@ void setup() {
     #endif
 
     // Init variables TODO: Load from file / store when changed
-    mode = MODE_ANI;
-    cycleDelay = 10;
-    resetNextCycle();
+    mode = MODE_VIS;
+    cycleDelay = 0;
+    visualization.setPaletteColor(0, CRGB(0, 48, 73));      // Background
+    visualization.setPaletteColor(1, CRGB(214, 40, 40));    // Color A
+    visualization.setPaletteColor(2, CRGB(247, 127, 0));    // Color B
+    visualization.setPaletteColor(3, CRGB(252, 191, 73));   // Color C
+    visualization.setPaletteColor(4, CRGB(234, 226, 183));  // Color D
 
     // Init the SPIFFS and open the first gif file
     FileIO::init(DIR_ANIMATIONS);
@@ -391,24 +452,16 @@ void setup() {
     gifDecoder.setFileReadCallback(FileIO::onGifFileRead);
     gifDecoder.setFileReadBlockCallback(FileIO::onGifFileReadBlock);
 
-    // Load the first animation
-    loadNextAnimation();
-
-    // Init the visualization colors
-    visualization.colors[0] = CRGB(255, 0, 255);
-    visualization.colors[1] = CRGB(0, 255, 255);
-    visualization.colors[2] = CRGB(255, 255, 255);
-    visualization.colors[3] = CRGB(100, 100, 255);
+    // Load the first animation and reset the cycle
+    // If in visualization mode, no preloading is needed
+    if (mode == MODE_ANI) loadNextAnimation();
+    resetNextCycle();
 
     // Init WiFi
-    DEBUGLN("Initializing WiFi")
-
-    WiFi.disconnect();
-    WiFi.persistent(false);
     onConnectedHandler = WiFi.onStationModeConnected(onConnected);
     WiFi.mode(WIFI_STA);
     WiFi.hostname(WIFI_HOSTNAME);
-    WiFi.begin(WIFI_SSID, WIFI_PSK);
+    connectWiFi();
 
     // Initialize the webserver. The on not found handler will handle all html file requests
     webserver.onNotFound(onHttpRequest);
@@ -429,20 +482,23 @@ void setup() {
  ****************************/
 
 void loop() {
+    // Reconnect WiFi
+    connectWiFi();
+
     // Update mdns
     MDNS.update();
 
     // Check for incoming http requests
     webserver.handleClient();
 
+    // Cycle through all animations / visualizations
+    if (cycleDelay > 0 && millis() > nextCycle) {
+        resetNextCycle();
+        loadNextAnimation();
+    }
+
     // ======== ANIMATION MODE ========
     if (mode == MODE_ANI) {
-        // Cycle through all animations
-        if (cycleDelay > 0 && millis() > nextCycle) {
-            resetNextCycle();
-            loadNextAnimation();
-        }
-
         // Decode frame will handle the delay
         gifDecoder.decodeFrame();
     }
@@ -453,7 +509,7 @@ void loop() {
         visualization.update(leds);
     }
 
-
+    // Update the led matrix
     FastLED.show();
 
     // Debug the current led data to the serial output

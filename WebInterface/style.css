@@ -9,3 +9,23 @@
 .control-bar-input {
   width: 11rem !important;
 }
+
+.v-toolbar {
+  background: #F77F00;
+  background: -webkit-gradient(to right, #D62828, #F77F00);
+  background: -moz-linear-gradient(to right, #D62828, #F77F00);
+  background: -o-linear-gradient(to right, #D62828, #F77F00);
+  background: linear-gradient(to right, #D62828, #F77F00);
+}
+
+.v-footer {
+  background: #F77F00;
+  background: -webkit-gradient(to right, #D62828, #F77F00);
+  background: -moz-linear-gradient(to right, #D62828, #F77F00);
+  background: -o-linear-gradient(to right, #D62828, #F77F00);
+  background: linear-gradient(to right, #D62828, #F77F00);
+}
+
+#app {
+  background-color: #003049;
+}
