@@ -1,7 +1,7 @@
 # WiFi-Matrix
 12x12 RGB LED Matrix based on the ESP8266 and WS2812B leds that can display GIF files from the SPIFFS, visualize audio from a microphone input and runs a small web interface.
 
-This project is currently highly in development and may not fully work as expected, but it can give a decent example and guideline on how to create a more complex ESP Project with WebInterface and Rest API.
+**Disclaimer**: I'm not actively working on this project anymore, but it can give a decent example and guideline on how to create a more complex ESP Project with WebInterface and Rest API.
 
 ## Usage
 - In the `ESPController/src/` directory, rename `Settings-example.h` to `Settings.h` and enter your WiFi credentials and custom settings.
